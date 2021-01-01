@@ -1,22 +1,18 @@
 package fi.tkgwf.ruuvi;
 
-import fi.tkgwf.ruuvi.bean.EnhancedRuuviMeasurement;
 import fi.tkgwf.ruuvi.config.Config;
 import fi.tkgwf.ruuvi.config.ConfigTest;
-import fi.tkgwf.ruuvi.db.DBConnection;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
 import static fi.tkgwf.ruuvi.TestFixture.RSSI_BYTE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MainTest {
@@ -61,46 +57,11 @@ class MainTest {
 
         final boolean runResult = main.run(reader);
         assertTrue(runResult);
-
-        // Assert that only the expected measurements were persisted:
-
-        final MockConnection mockConnection = (MockConnection) Config.getDBConnection();
-        assertEquals(3, mockConnection.getMeasurements().size());
-        assertEquals(1, mockConnection.getMeasurements().get(0).getRssi().intValue());
-        assertEquals(3, mockConnection.getMeasurements().get(1).getRssi().intValue());
-        assertEquals(4, mockConnection.getMeasurements().get(2).getRssi().intValue());
-        assertTrue(mockConnection.isCloseCalled());
     }
 
     private void setClockToMilliseconds(final Long... millis) {
         TestFixture.setClockToMilliseconds(new FixedInstantsProvider(Arrays.asList(millis)));
     }
-
-
-    public static class MockConnection implements DBConnection {
-
-        private final ArrayList<EnhancedRuuviMeasurement> measurements = new ArrayList<>();
-        private boolean closeCalled = false;
-
-        @Override
-        public void save(final EnhancedRuuviMeasurement measurement) {
-            this.measurements.add(measurement);
-        }
-
-        @Override
-        public void close() {
-            this.closeCalled = true;
-        }
-
-        List<EnhancedRuuviMeasurement> getMeasurements() {
-            return measurements;
-        }
-
-        boolean isCloseCalled() {
-            return closeCalled;
-        }
-    }
-
 
     /**
      * A timestamp supplier whose readings can be pre-programmed.
