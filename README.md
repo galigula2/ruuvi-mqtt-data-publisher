@@ -1,106 +1,39 @@
-# RuuviCollector
+# ruuvi-mqtt-data-publisher
 
-RuuviCollector is an application for collecting sensor measurements from RuuviTags and storing them to InfluxDB. For more about how and for what this is used for, see [this](https://f.ruuvi.com/t/collecting-ruuvitag-measurements-and-displaying-them-with-grafana/267) post.
+This is a slightly altered version of [Scrin/RuuviCollector](https://github.com/Scrin/RuuviCollector) which can be used to publish data from [RuuviTags](https://ruuvi.com) to an MQTT broker. 
 
-Note: As this application is still early in development, there is very little documentation at this point, so some knowledge in Linux and Java is necessary for fully understanding how to use this at this point.
+Personally I use this with various tags to publish data to [Home Assistant](https://www.home-assistant.io).
 
-### Features
+For more details and documentation, please refer to [Scrin/RuuviCollector](https://github.com/Scrin/RuuviCollector).
 
-Supports following RuuviTag [Data Formats](https://github.com/ruuvi/ruuvi-sensor-protocols):
+## Additional features
 
- - Data Format 2: Eddystone-URL, URL-safe base64 -encoded, kickstarter edition
- - Data Format 3: "RAW v1" BLE Manufacturer specific data, all current sensor readings
- - Data Format 4: Eddystone-URL, URL-safe base64 -encoded, with tag id
- - Data Format 5: "RAW v2" BLE Manufacturer specific data, all current sensor readings + extra
+Few additional features that are available
 
-Supports following data from the tag (depending on tag firmware):
+### MQTT broker configuration
 
- - Temperature (Celsius)
- - Relative humidity (0-100%)
- - Air pressure (Pascal)
- - Acceleration for X, Y and Z axes (g)
- - Battery voltage (Volts)
- - TX power (dBm)
- - RSSI (Signal strength *at the receiver*, dBm)
- - Movement counter (Running counter incremented each time a motion detection interrupt is received)
- - Measurement sequence number (Running counter incremented each time a new measurement is taken on the tag)
-
-Ability to calculate following values in addition to the raw data (the accuracy of these values are approximations):
-
- - Total acceleration (g)
- - Absolute humidity (g/m³)
- - Dew point (Celsius)
- - Equilibrium vapor pressure (Pascal)
- - Air density (Accounts for humidity in the air, kg/m³)
- - Acceleration angle from X, Y and Z axes (Degrees)
-
-See [MEASUREMENTS.md](./MEASUREMENTS.md) for additional details about the measurements.
-
-### Requirements
-
-* Linux-based OS (this application uses the bluez stack for Bluetooth which is not available for Windows for example)
-* Bluetooth adapter supporting Bluetooth Low Energy
-* *bluez* and *bluez-hcidump* at least version 5.41 (For running the application, versions prior to 5.41 have a bug which causes the bluetooth to hang occasionally while doing BLE scanning)
-* Maven (For building from sources)
-* JDK8 (For building from sources, JRE8 is enough for just running the built JAR)
-
-### Building
-
-Execute 
-
-```sh
-mvn clean package
-```
-
-### Installation
-
-TODO: Service scripts and other necessary stuff for "properly installing" this will be added later.
-For now, you can do the following to the this up and running:
-
-- hcitool and hcidump require additional capabilities, so you need to execute the following commands or run the application as root
-
-```sh
-sudo setcap 'cap_net_raw,cap_net_admin+eip' `which hcitool`
-sudo setcap 'cap_net_raw,cap_net_admin+eip' `which hcidump`
-```
-
-- Run the built JAR-file with `java -jar ruuvi-collector-*.jar`. Note: as there is no service scripts yet, it's recommended to run this for example inside *screen* to avoid the application being killed when terminal session ends
-- To configure the settings, copy the `ruuvi-collector.properties.example` to `ruuvi-collector.properties` and place it in the same directory as the JAR file and edit the file according to your needs.
-
-### Configuration
-
-The default configuration which works without a config file assumes InfluxDB is running locally with default settings, with a database called 'ruuvi'.
-To change the default settings, copy the ruuvi-collector.properties.example file as ruuvi-collector.properties in the same directory as the collector jar file and change the settings you want.
-Most up-to-date information about the supported configuration options can be found in the ruuvi-collector.properties.example file.
-
-To give human readable friendly names to tags (based on their MAC address), copy the ruuvi-names.properties.example file as ruuvi-names.properties in the same directory as the collector jar file and set the names in this file according to the examples there.
-
-### Running
-
-For built version (while in the "root" of the project):
-
-```sh
-java -jar target/ruuvi-collector-*.jar
-```
-
-Easily compile and run while developing:
+The following example shows how you can connect this application to an MQTT broker like [Eclipse Mosquitto](https://mosquitto.org)
 
 ```
-mvn compile exec:java
+mqtt.brokerUrls=tcp://localhost:1883
+mqtt.username=some-username
+mqtt.password=secret
+mqtt.topic=/home/ruuvi
+mqtt.clientId=ruuvi-mqtt-data-publisher
 ```
 
-### Docker
+### Sensor update interval
 
-Dockerized installation is possible with the bundled Dockerfile, which is particularly useful for "server-grade" installations. The Docker image can be built with for example:
+If the update interval for a ruuvitag is too frequent you can specify a default interval as ISO-8601 duration format:
 
-```sh
-docker build -t ruuvi-collector .
+```
+updateInterval=PT2M30S
 ```
 
-Note: if you have configuration files present in the current directory, they will be added to the built image. Alternatively they can be mounted inside the container while running.
+This would give you update interval of 2 minutes and 30 seconds.
 
-Depending on the configuration, it may be necessary to use `--net=host` (to access the host network stack directly) and/or `--privileged` (to access a local BLE adapter directly), for example:
+Or, if you want to define it per tag:
 
-```sh
-docker run --name ruuvi-collector --privileged --net=host -d ruuvi-collector
+```
+tag.D04AB59C588B.updateInterval=PT5S
 ```
