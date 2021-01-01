@@ -16,9 +16,7 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -126,7 +124,7 @@ public abstract class Config {
             if (configFile != null) {
                 LOG.debug("Config: " + configFile);
                 Properties props = new Properties();
-                props.load(new InputStreamReader(new FileInputStream(configFile), Charset.forName("UTF-8")));
+                props.load(new FileInputStream(configFile));
                 readConfigFromProperties(props);
             }
         } catch (IOException ex) {
@@ -327,7 +325,7 @@ public abstract class Config {
             if (configFile != null) {
                 LOG.debug("Tag names: " + configFile);
                 Properties props = new Properties();
-                props.load(new InputStreamReader(new FileInputStream(configFile), Charset.forName("UTF-8")));
+                props.load(new FileInputStream(configFile));
                 Enumeration<?> e = props.propertyNames();
                 while (e.hasMoreElements()) {
                     String key = StringUtils.trimToEmpty((String) e.nextElement()).toUpperCase();

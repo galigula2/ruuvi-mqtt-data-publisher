@@ -1,9 +1,5 @@
 # Changelog
 
-### v0.2.6
-
- - Fix UTF-8 support in config files (ruuvi-collector.properties and ruuvi-names.properties). This might be a breaking change if your config relied on broken charset support.
-
 ### v0.2.5
 
  - Improved error tolerance while parsing for raw data
