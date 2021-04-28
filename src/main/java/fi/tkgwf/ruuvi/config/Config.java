@@ -34,6 +34,8 @@ public abstract class Config {
     private static final String[] DEFAULT_BROKER_URLS = { "tcp://localhost:1883" };
     private static final String DEFAULT_MQTT_TOPIC = "/ruuvi";
 
+    private static final int DEFAULT_SCAN_RESTART_SECS = 60;
+
     private static long measurementUpdateLimit;
     private static String storageMethod;
     private static String storageValues;
@@ -338,5 +340,9 @@ public abstract class Config {
         return Optional.ofNullable(tagProperties.get(mac))
                 .map(TagProperties::getUpdateInterval)
                 .orElse(updateInterval);
+    }
+
+    public static int getScanRestartSecs() {
+        return DEFAULT_SCAN_RESTART_SECS;
     }
 }

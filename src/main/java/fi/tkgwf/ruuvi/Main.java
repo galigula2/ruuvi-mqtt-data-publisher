@@ -13,9 +13,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import troinine.ruuvi.hci.HciProcessHandler;
 import troinine.ruuvi.mqtt.MqttPublisher;
 
 public class Main {
@@ -23,6 +23,7 @@ public class Main {
 
     private final BeaconHandler beaconHandler = new BeaconHandler();
     private final MqttPublisher mqttPublisher = new MqttPublisher();
+    private final HciProcessHandler hciProcessHandler = new HciProcessHandler();
 
     public static void main(String[] args) {
         Main m = new Main();
@@ -35,40 +36,34 @@ public class Main {
         logger.info("Clean exit");
     }
 
-    private BufferedReader startHciListeners() throws IOException {
-        String[] scan = Config.getScanCommand();
-        if (scan.length > 0 && StringUtils.isNotBlank(scan[0])) {
-            Process hcitool = new ProcessBuilder(scan).start();
-            Runtime.getRuntime().addShutdownHook(new Thread(hcitool::destroyForcibly));
-            logger.debug("Starting scan with: " + Arrays.toString(scan));
-        } else {
-            logger.debug("Skipping scan command, scan command is blank.");
-        }
-        Process hcidump = new ProcessBuilder(Config.getDumpCommand()).start();
-        Runtime.getRuntime().addShutdownHook(new Thread(hcidump::destroyForcibly));
-        logger.debug("Starting dump with: " + Arrays.toString(Config.getDumpCommand()));
-        return new BufferedReader(new InputStreamReader(hcidump.getInputStream()));
-    }
-
     /**
      * Run the collector.
      *
      * @return true if the run ends gracefully, false in case of severe errors
      */
     public boolean run() {
-        Runtime.getRuntime().addShutdownHook(new Thread(mqttPublisher::disconnect));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::cleanup));
 
-        BufferedReader reader;
-        try {
-            reader = startHciListeners();
+        try (BufferedReader reader = startHciListeners()) {
+            logger.info("BLE listener started successfully, waiting for data...");
+            logger.info("If you don't get any data, check that you are able to run 'hcitool lescan' and 'hcidump --raw' without issues");
+
+            return run(reader);
         } catch (IOException ex) {
             logger.error("Failed to start hci processes", ex);
             return false;
         }
-        logger.info("BLE listener started successfully, waiting for data...");
-        logger.info("If you don't get any data, check that you are able to run 'hcitool lescan' and 'hcidump --raw' without issues");
+    }
 
-        return run(reader);
+    private void cleanup() {
+        mqttPublisher.disconnect();
+        hciProcessHandler.stop();
+    }
+
+    private BufferedReader startHciListeners() throws IOException {
+        return new BufferedReader(
+                new InputStreamReader(
+                        hciProcessHandler.start()));
     }
 
     boolean run(final BufferedReader reader) {
