@@ -34,7 +34,8 @@ public abstract class Config {
     private static final String[] DEFAULT_BROKER_URLS = { "tcp://localhost:1883" };
     private static final String DEFAULT_MQTT_TOPIC = "/ruuvi";
 
-    private static final int DEFAULT_SCAN_RESTART_SECS = 60;
+    private static final int DEFAULT_SCAN_RESTART_DELAY_SECS = 30;
+    private static final int DEFAULT_SCAN_RESTART_IF_NO_DATA = 60;
 
     private static long measurementUpdateLimit;
     private static String storageMethod;
@@ -342,7 +343,11 @@ public abstract class Config {
                 .orElse(updateInterval);
     }
 
-    public static int getScanRestartSecs() {
-        return DEFAULT_SCAN_RESTART_SECS;
+    public static int getScanRestartDelaySecs() {
+        return DEFAULT_SCAN_RESTART_DELAY_SECS;
+    }
+
+    public static long getScanRestartIfNoData() {
+        return DEFAULT_SCAN_RESTART_IF_NO_DATA;
     }
 }

@@ -55,7 +55,7 @@ class MainTest {
 
         // Enough with the setup, run the process:
 
-        final boolean runResult = main.run(reader);
+        final boolean runResult = false; // main.run(reader);
         assertTrue(runResult);
     }
 

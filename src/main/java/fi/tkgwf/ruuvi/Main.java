@@ -44,11 +44,13 @@ public class Main {
     public boolean run() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::cleanup));
 
-        try (BufferedReader reader = startHciListeners()) {
+        try {
+            startHciListeners();
+
             logger.info("BLE listener started successfully, waiting for data...");
             logger.info("If you don't get any data, check that you are able to run 'hcitool lescan' and 'hcidump --raw' without issues");
 
-            return run(reader);
+            return read();
         } catch (IOException ex) {
             logger.error("Failed to start hci processes", ex);
             return false;
@@ -60,20 +62,18 @@ public class Main {
         hciProcessHandler.stop();
     }
 
-    private BufferedReader startHciListeners() throws IOException {
-        return new BufferedReader(
-                new InputStreamReader(
-                        hciProcessHandler.start()));
+    private void startHciListeners() throws IOException {
+        hciProcessHandler.start();
     }
 
-    boolean run(final BufferedReader reader) {
+    boolean read() {
         HCIParser parser = new HCIParser();
         Map<String, Instant> lastUpdates = new HashMap<>();
         boolean dataReceived = false;
         boolean healthy = false;
         try {
             String line, latestMAC = null;
-            while ((line = reader.readLine()) != null) {
+            while ((line = hciProcessHandler.readLine()) != null) {
                 if (line.contains("device: disconnected")) {
                     logger.error(line + ": Either the bluetooth device was externally disabled or physically disconnected");
                     healthy = false;
