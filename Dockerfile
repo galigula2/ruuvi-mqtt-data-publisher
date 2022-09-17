@@ -5,4 +5,4 @@ RUN apk add bluez-deprecated
 ADD . /app
 WORKDIR /app
 RUN mvn clean package
-CMD ["java", "-jar", "target/ruuvi-collector-0.2.jar"]
+CMD ["java", "-jar", "target/ruuvi-mqtt-data-publisher-0.1.0-SNAPSHOT.jar"]
